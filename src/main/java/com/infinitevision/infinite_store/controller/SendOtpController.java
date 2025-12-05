@@ -16,12 +16,12 @@ public class SendOtpController {
 
     private final OtpService otpService;
 
-    @PostMapping("/send-Otp")
+    @PostMapping("/SendOtp")
     public ApiResponse<?> sendOtp(@RequestBody SendOtpRequest request) {
 
         String phoneNumber = request.getPhoneNumber();
 
-        // Validate phone number
+
         if (phoneNumber == null || !phoneNumber.matches("\\d+")) {
             throw new OtpException("Phone number must contain only numbers");
         }
@@ -30,7 +30,7 @@ public class SendOtpController {
             throw new OtpException("Phone number must be exactly 10 digits");
         }
 
-        // This calls OtpService logic
+
         String otp = OtpService.sendOtp(phoneNumber);
         log.info("OTP sent successfully to phone number: {}", phoneNumber);
         return ApiResponse.success(

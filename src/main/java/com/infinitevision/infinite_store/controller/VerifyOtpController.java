@@ -20,7 +20,7 @@ public class VerifyOtpController {
         this.otpService = otpService;
     }
 
-    @PostMapping("/verify-Otp")
+    @PostMapping("/VerifyOtp")
     public ApiResponse<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
 
         String phoneNumber = request.getPhoneNumber();
@@ -38,7 +38,7 @@ public class VerifyOtpController {
             throw new OtpException("OTP is required");
         }
 
-        // Service now returns token
+
         String token = otpService.verifyOtp(phoneNumber, otp);
         log.info("OTP verification successful for phone number: {}", phoneNumber);
         return ApiResponse.success(

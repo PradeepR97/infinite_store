@@ -6,11 +6,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class OtpService {
 
-    // static OTP for now
+
     private static final String STATIC_OTP = "123456";
 
     public static String sendOtp(String phoneNumber) {
-        // always return static OTP for now
+
         return STATIC_OTP;
     }
 
