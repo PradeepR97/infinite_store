@@ -19,4 +19,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.failure("Failed to fetch categories", 500));
     }
+    @ExceptionHandler(OtpException.class)
+    public ResponseEntity<ApiResponse<Object>> handleOtpException(OtpException ex) {
+        logger.error("OTP error: {}", ex.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.failure(ex.getMessage(), 400));
+    }
 }
