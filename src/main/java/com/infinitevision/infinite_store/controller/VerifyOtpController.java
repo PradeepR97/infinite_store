@@ -26,26 +26,33 @@ public class VerifyOtpController {
         String phoneNumber = request.getPhoneNumber();
         String otp = request.getOtp();
 
-        if (phoneNumber == null || !phoneNumber.matches("\\d+")) {
-            throw new OtpException("Phone number must contain only numbers");
-        }
-
-        if (phoneNumber.length() != 10) {
-            throw new OtpException("Phone number must be exactly 10 digits");
+        if (phoneNumber == null || !phoneNumber.matches("\\d{10}")) {
+            throw new OtpException("Phone number must contain only numbers and be 10 digits");
         }
 
         if (otp == null || otp.isEmpty()) {
             throw new OtpException("OTP is required");
         }
 
+        Object result = otpService.verifyOtp(phoneNumber, otp);
 
-        String token = otpService.verifyOtp(phoneNumber, otp);
-        log.info("OTP verification successful for phone number: {}", phoneNumber);
-        return ApiResponse.success(
-                "OTP verified successfully",
-                java.util.Map.of("token", token)
-        );
+        if (result instanceof Long) {
+            // Existing user → return ID
+            return ApiResponse.success(
+                    "OTP verified successfully",
+                    java.util.Map.of("userId", result)
+            );
+        } else if (result instanceof String) {
+            // New user → return token
+            return ApiResponse.success(
+                    "OTP verified successfully",
+                    java.util.Map.of("token", result)
+            );
+        } else {
+            throw new OtpException("Unexpected error");
+        }
     }
+
 
 
 }
