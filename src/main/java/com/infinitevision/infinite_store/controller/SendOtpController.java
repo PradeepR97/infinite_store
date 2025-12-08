@@ -1,5 +1,6 @@
 package com.infinitevision.infinite_store.controller;
 
+import com.infinitevision.infinite_store.domain.model.enums.UserOtp;
 import com.infinitevision.infinite_store.dto.ApiResponse;
 import com.infinitevision.infinite_store.dto.SendOtpRequest;
 import com.infinitevision.infinite_store.exception.OtpException;
@@ -21,7 +22,6 @@ public class SendOtpController {
 
         String phoneNumber = request.getPhoneNumber();
 
-
         if (phoneNumber == null || !phoneNumber.matches("\\d+")) {
             throw new OtpException("Phone number must contain only numbers");
         }
@@ -30,12 +30,17 @@ public class SendOtpController {
             throw new OtpException("Phone number must be exactly 10 digits");
         }
 
+        // Send OTP and get the saved entity
+        UserOtp userOtp = otpService.sendOtp(phoneNumber);
 
-        String otp = OtpService.sendOtp(phoneNumber);
-        log.info("OTP sent successfully to phone number: {}", phoneNumber);
         return ApiResponse.success(
                 "OTP sent successfully",
-                java.util.Map.of("otp", otp) // show OTP for testing
+                java.util.Map.of(
+                        "otp", userOtp.getOtp(),
+                        "createdAt", userOtp.getCreatedAt()
+                )
         );
     }
+
+
 }

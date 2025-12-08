@@ -13,7 +13,8 @@ public class JwtService {
 
     public static String generateToken(String phoneNumber) {
 
-        long expiration = 1000 * 60 * 60 * 24;
+        long expiration =  1000 * 60 * 5; // 5 minutes
+
 
         return Jwts.builder()
                 .setSubject(phoneNumber)
