@@ -30,13 +30,13 @@ public class OtpService {
         userOtp.setCreatedAt(LocalDateTime.now());
         userOtp.setCreatedBy("NULL");
 
-        return userOtpRepository.save(userOtp); // save and return
+        return userOtpRepository.save(userOtp);
     }
 
-    // Step 2: Verify OTP and return either userId or token
+
     public Object verifyOtp(String phoneNumber, String otp) {
 
-        // Fetch latest OTP for this number
+
         UserOtp dbOtp = userOtpRepository.findFirstByPhoneNumberOrderByCreatedAtDesc(phoneNumber)
                 .orElseThrow(() -> new OtpException("OTP not found"));
 
@@ -44,14 +44,14 @@ public class OtpService {
             throw new OtpException("Invalid OTP");
         }
 
-        // Check if user exists
+
         User user = userRepository.findByPhoneNumber(phoneNumber).orElse(null);
 
         if (user != null) {
-            // Existing user → return ID
+
             return user.getId();
         } else {
-            // New user → create and return token
+
             User newUser = new User();
             newUser.setPhoneNumber(phoneNumber);
             userRepository.save(newUser);

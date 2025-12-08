@@ -6,6 +6,6 @@ import java.util.Optional;
 
 public interface UserOtpRepository extends JpaRepository<UserOtp, Long> {
 
-    // Get the latest OTP for a phone number
+
     Optional<UserOtp> findFirstByPhoneNumberOrderByCreatedAtDesc(String phoneNumber);
 }

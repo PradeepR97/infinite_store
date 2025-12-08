@@ -30,7 +30,7 @@ public class SendOtpController {
             throw new OtpException("Phone number must be exactly 10 digits");
         }
 
-        // Send OTP and get the saved entity
+
         UserOtp userOtp = otpService.sendOtp(phoneNumber);
 
         return ApiResponse.success(

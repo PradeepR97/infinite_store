@@ -2,10 +2,10 @@ package com.infinitevision.infinite_store.controller;
 
 import com.infinitevision.infinite_store.dto.ApiResponse;
 import com.infinitevision.infinite_store.dto.VerifyOtpRequest;
-import com.infinitevision.infinite_store.service.JwtService;
+
 import com.infinitevision.infinite_store.service.OtpService;
 import com.infinitevision.infinite_store.exception.OtpException;
-import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,6 +17,7 @@ public class VerifyOtpController {
     private final OtpService otpService;
 
     public VerifyOtpController(OtpService otpService) {
+
         this.otpService = otpService;
     }
 
@@ -37,13 +38,13 @@ public class VerifyOtpController {
         Object result = otpService.verifyOtp(phoneNumber, otp);
 
         if (result instanceof Long) {
-            // Existing user → return ID
+
             return ApiResponse.success(
                     "OTP verified successfully",
                     java.util.Map.of("userId", result)
             );
         } else if (result instanceof String) {
-            // New user → return token
+
             return ApiResponse.success(
                     "OTP verified successfully",
                     java.util.Map.of("token", result)
