@@ -2,6 +2,7 @@ package com.infinitevision.infinite_store.controller;
 
 
 import com.infinitevision.infinite_store.domain.model.enums.Product;
+import com.infinitevision.infinite_store.dto.ApiResponse;
 import com.infinitevision.infinite_store.repository.ProductRepository;
 import com.infinitevision.infinite_store.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,10 +21,12 @@ public class ProductController {
     private ProductService productService;
 
     @GetMapping("/all")
-    public ResponseEntity<?> getProductCards() {
-        return ResponseEntity.ok(productService.getProductCards());
+    public ResponseEntity<ApiResponse<?>> getProductCards() {
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Product list fetched successfully", productService.getProductCards())
+        );
     }
-
-
 }
+
 
