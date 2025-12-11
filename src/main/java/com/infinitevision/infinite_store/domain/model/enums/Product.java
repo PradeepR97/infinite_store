@@ -27,6 +27,15 @@ public class Product extends BaseUser {
     private Boolean isAvailable;
     private Double rating;
     private Integer totalReviews;
+
+    // 🔥 Auto calculate price using MRP + Discount
+    @PrePersist
+    @PreUpdate
+    public void calculatePriceFromDiscount() {
+        if (mrp != null && discountPercentage != null) {
+            this.price = mrp - ((mrp * discountPercentage) / 100);
+        }
+    }
 }
 
 

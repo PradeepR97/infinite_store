@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/otp")
+@RequestMapping("/auth")
 public class VerifyOtpController {
 
     private final OtpService otpService;
@@ -21,7 +21,7 @@ public class VerifyOtpController {
         this.otpService = otpService;
     }
 
-    @PostMapping("/VerifyOtp")
+    @PostMapping("/verifyOtp")
     public ApiResponse<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
 
         String phoneNumber = request.getPhoneNumber();

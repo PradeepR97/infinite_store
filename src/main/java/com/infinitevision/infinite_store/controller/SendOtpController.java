@@ -11,13 +11,13 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/otp")
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 public class SendOtpController {
 
     private final OtpService otpService;
 
-    @PostMapping("/SendOtp")
+    @PostMapping("/sendOtp")
     public ApiResponse<?> sendOtp(@RequestBody SendOtpRequest request) {
 
         String phoneNumber = request.getPhoneNumber();
