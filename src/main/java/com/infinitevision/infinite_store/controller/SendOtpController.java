@@ -20,18 +20,25 @@ public class SendOtpController {
     @PostMapping("/sendOtp")
     public ApiResponse<?> sendOtp(@RequestBody SendOtpRequest request) {
 
+        log.info("Received SendOtp request for phone: {}", request.getPhoneNumber());
+
         String phoneNumber = request.getPhoneNumber();
 
         if (phoneNumber == null || !phoneNumber.matches("\\d+")) {
+            log.error("Invalid phone number format: {}", phoneNumber);
             throw new OtpException("Phone number must contain only numbers");
         }
 
         if (phoneNumber.length() != 10) {
+            log.error("Phone number must be 10 digits: {}", phoneNumber);
             throw new OtpException("Phone number must be exactly 10 digits");
         }
 
+        log.debug("Phone number validation passed for: {}", phoneNumber);
 
         UserOtp userOtp = otpService.sendOtp(phoneNumber);
+
+        log.info("OTP generated successfully for phone: {}", phoneNumber);
 
         return ApiResponse.success(
                 "OTP sent successfully",
@@ -41,6 +48,5 @@ public class SendOtpController {
                 )
         );
     }
-
 
 }

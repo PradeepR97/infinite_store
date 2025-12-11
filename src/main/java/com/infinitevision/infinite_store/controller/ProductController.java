@@ -1,11 +1,10 @@
 package com.infinitevision.infinite_store.controller;
 
-
-import com.infinitevision.infinite_store.domain.model.enums.Product;
 import com.infinitevision.infinite_store.dto.ApiResponse;
-import com.infinitevision.infinite_store.repository.ProductRepository;
+import com.infinitevision.infinite_store.dto.ProductDetailsDTO;
 import com.infinitevision.infinite_store.service.ProductService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,16 +16,26 @@ import java.util.List;
 @RequestMapping("/api/products")
 public class ProductController {
 
-    @Autowired
-    private ProductService productService;
+    private static final Logger log = LoggerFactory.getLogger(ProductController.class);
 
+    private final ProductService productService;
+
+    public ProductController(ProductService productService) {
+        this.productService = productService;
+    }
+
+    // Fetch all products with full details
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse<?>> getProductCards() {
+    public ResponseEntity<ApiResponse<?>> getAllProducts() {
+
+        log.info("Request received: Fetching ALL product details");
+
+        List<ProductDetailsDTO> products = productService.getAllProducts();
+
+        log.debug("Fetched {} products", products.size());
 
         return ResponseEntity.ok(
-                ApiResponse.success("Product list fetched successfully", productService.getProductCards())
+                ApiResponse.success("All product details fetched successfully", products)
         );
     }
 }
-
-
