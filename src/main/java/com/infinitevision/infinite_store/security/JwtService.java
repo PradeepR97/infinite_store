@@ -1,4 +1,4 @@
-package com.infinitevision.infinite_store.service;
+package com.infinitevision.infinite_store.security;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

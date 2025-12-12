@@ -5,6 +5,7 @@ import com.infinitevision.infinite_store.domain.model.enums.UserOtp;
 import com.infinitevision.infinite_store.exception.OtpException;
 import com.infinitevision.infinite_store.repository.UserOtpRepository;
 import com.infinitevision.infinite_store.repository.UserRepository;
+import com.infinitevision.infinite_store.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
