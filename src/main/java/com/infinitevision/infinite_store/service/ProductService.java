@@ -16,31 +16,25 @@ public class ProductService {
     @Autowired
     private ProductRepository productRepository;
 
-    public List<ProductDetailsDTO> getAllProducts() {
 
-        return productRepository.findAll()
-                .stream()
-                .map(p -> new ProductDetailsDTO(
+    public List<ProductCardDTO> getAllProductCards() {
+        List<Product> products = productRepository.findAll();
+
+        return products.stream()
+                .map(p -> new ProductCardDTO(
                         p.getId(),
                         p.getProductName(),
-                        p.getDescription(),
-                        p.getPrice(),
                         p.getMrp(),
-                        p.getDiscountPercentage(),
-                        p.getCategoryId(),
-                        p.getSubcategoryId(),
-                        p.getBrand(),
-                        p.getWeight(),
-                        p.getUnitType(),
-                        p.getImageUrl(),
+                        p.getPrice(),
                         p.getThumbnailUrl(),
-                        p.getStock(),
-                        p.getIsAvailable(),
                         p.getRating(),
+                        p.getUnitType(),
+                        p.getDiscountPercentage(),
                         p.getTotalReviews()
                 ))
                 .toList();
     }
+
 
 
 }

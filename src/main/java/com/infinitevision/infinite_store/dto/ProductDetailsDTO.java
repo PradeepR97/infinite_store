@@ -1,6 +1,10 @@
 package com.infinitevision.infinite_store.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -9,20 +13,15 @@ public class ProductDetailsDTO {
 
     private Long id;
     private String productName;
-    private String description;
-    private Double price;
     private Double mrp;
-    private Double discountPercentage;
-    private Long categoryId;
-    private Long subcategoryId;
-    private String brand;
-    private Double weight;
-    private String unitType;
-    private String imageUrl;
-    private String thumbnailUrl;
-    private Integer stock;
-    private Boolean isAvailable;
+    private Double price;
     private Double rating;
     private Integer totalReviews;
-}
+    private String unitType;
 
+    private List<String> images;
+    private List<String> highlights;
+    private List<String> coupons;
+
+    private DistributorDTO distributor;
+}

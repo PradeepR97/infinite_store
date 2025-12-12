@@ -16,6 +16,8 @@ public class ProductCardDTO {
     private String thumbnailUrl;
     private Double rating;
     private String unitType;
+    private Double discountPercentage;
+    private Integer totalReviews;
 }
 
 
