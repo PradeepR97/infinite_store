@@ -2,7 +2,6 @@ package com.infinitevision.infinite_store.controller;
 
 import com.infinitevision.infinite_store.dto.ApiResponse;
 import com.infinitevision.infinite_store.dto.ProductCardDTO;
-import com.infinitevision.infinite_store.dto.ProductDetailsDTO;
 import com.infinitevision.infinite_store.service.ProductService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,11 +9,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.util.List;
 
 @RestController
-@RequestMapping("/products")
+@RequestMapping("/api/products")
+
 public class ProductController {
 
     private static final Logger log = LoggerFactory.getLogger(ProductController.class);
@@ -24,7 +23,7 @@ public class ProductController {
     public ProductController(ProductService productService) {
         this.productService = productService;
     }
-    // Fetch product card view (minimal info)
+
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<?>> getProductCards() {
 

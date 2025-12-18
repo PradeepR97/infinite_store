@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProductCardDTO {
-
+    private Long userId;
     private Long id;
     private String productName;
     private Double mrp;
