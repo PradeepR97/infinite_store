@@ -2,8 +2,6 @@ package com.infinitevision.infinite_store.service;
 
 import com.infinitevision.infinite_store.domain.model.enums.Product;
 import com.infinitevision.infinite_store.dto.ProductCardDTO;
-
-
 import com.infinitevision.infinite_store.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
