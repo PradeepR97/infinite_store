@@ -2,27 +2,32 @@ package com.infinitevision.infinite_store.service;
 
 import com.infinitevision.infinite_store.domain.model.enums.User;
 import com.infinitevision.infinite_store.domain.model.enums.UserOtp;
+import com.infinitevision.infinite_store.dto.VerifyOtpResponse;
 import com.infinitevision.infinite_store.exception.OtpException;
 import com.infinitevision.infinite_store.repository.UserOtpRepository;
 import com.infinitevision.infinite_store.repository.UserRepository;
 import com.infinitevision.infinite_store.security.JwtService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OtpService {
-
     private final UserRepository userRepository;
     private final UserOtpRepository userOtpRepository;
-    private final JwtService jwtService;   // ✅ inject JwtService
+    private final JwtService jwtService;
 
     private static final String STATIC_OTP = "123456";
 
-    // Step 1: Send OTP
+    // ---------------- SEND OTP ----------------
     public UserOtp sendOtp(String phoneNumber) {
+
+        log.info("Sending OTP to phone={}", phoneNumber);
 
         UserOtp userOtp = new UserOtp();
         userOtp.setPhoneNumber(phoneNumber);
@@ -30,29 +35,39 @@ public class OtpService {
         userOtp.setCreatedAt(LocalDateTime.now());
         userOtp.setCreatedBy("SYSTEM");
 
-        return userOtpRepository.save(userOtp);
+        UserOtp savedOtp = userOtpRepository.save(userOtp);
+
+        log.info("OTP saved successfully for phone={}", phoneNumber);
+
+        return savedOtp;
     }
 
-    // Step 2: Verify OTP & Generate Token
-    public String verifyOtp(String phoneNumber, String otp) {
-
+    public VerifyOtpResponse verifyOtp(String phoneNumber, String otp) {
         UserOtp dbOtp = userOtpRepository
-                .findFirstByPhoneNumberOrderByCreatedAtDesc(phoneNumber)
+                .findTopByPhoneNumberOrderByCreatedAtDesc(phoneNumber)
                 .orElseThrow(() -> new OtpException("OTP not found"));
 
         if (!dbOtp.getOtp().equals(otp)) {
             throw new OtpException("Invalid OTP");
         }
 
-        // ✅ Fetch or create user
-        User user = userRepository.findByPhoneNumber(phoneNumber)
-                .orElseGet(() -> {
-                    User newUser = new User();
-                    newUser.setPhoneNumber(phoneNumber);
-                    return userRepository.save(newUser);
-                });
+        Optional<User> optionalUser = userRepository.findByPhoneNumber(phoneNumber);
 
-        // ✅ Generate token with userId + phone
-        return jwtService.generateToken(user.getId(), phoneNumber);
+        Long userId = null;
+        boolean isNewUser = true;
+        String token;
+
+        if (optionalUser.isPresent()) {
+            // Already registered → generate FULL JWT
+            userId = optionalUser.get().getId();
+            isNewUser = false;
+            token = jwtService.generateToken(userId, phoneNumber);
+        } else {
+            // New user → generate TEMP token (only phone)
+            token = jwtService.generateTempToken(phoneNumber);
+        }
+
+        return new VerifyOtpResponse(userId, isNewUser, token);
     }
+
 }
