@@ -34,4 +34,10 @@ public class Address {
     private AddressType addressType;
 
     @Column(name = "is_default", nullable = false)
-    private Boolean defaultAddress = false;}
+    private Boolean defaultAddress = false;
+
+    @Column(name = "landmark")
+    private String landmark;
+}
+
+

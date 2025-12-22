@@ -29,7 +29,7 @@ public class AddressService {
 
         log.info("Adding {} address for user {}", dto.getAddressType(), userId);
 
-        // 🚫 LIMIT: ONLY ONE HOME & ONE WORK PER USER
+
         if (dto.getAddressType() == AddressType.HOME ||
                 dto.getAddressType() == AddressType.WORK) {
 
@@ -43,13 +43,14 @@ public class AddressService {
             }
         }
 
-        // ⭐ DEFAULT ADDRESS LOGIC
+
         boolean hasAnyAddress = addressRepository.existsByUser(user);
 
         Address address = Address.builder()
                 .user(user)
                 .addressLine1(dto.getAddressLine1())
                 .addressLine2(dto.getAddressLine2())
+                .landmark(dto.getLandmark())
                 .city(dto.getCity())
                 .state(dto.getState())
                 .pincode(dto.getPincode())
@@ -64,19 +65,39 @@ public class AddressService {
         return mapToResponse(address);
     }
 
-    public List<AddressResponseDTO> getAddresses(String token) {
+    public List<AddressResponseDTO> getAddressesByUserId(String token, Long userId) {
+        log.info("Fetching addresses for userId={}", userId);
 
-        Long userId = jwtService.extractUserId(token);
+        Long tokenUserId = jwtService.extractUserId(token);
+        log.info("Extracted userId={} from token", tokenUserId);
+
+        // Authorization check
+        if (!tokenUserId.equals(userId)) {
+            log.warn("Unauthorized access attempt. Token userId={} does not match requested userId={}", tokenUserId, userId);
+            throw new RuntimeException("Unauthorized access");
+        }
+
+        // Fetch user
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> {
+                    log.error("User not found with userId={}", userId);
+                    return new RuntimeException("User not found");
+                });
+        log.info("User found: {}", user.getId());
 
-        log.info("Fetching addresses for user {}", userId);
-
-        return addressRepository.findByUser(user)
+        // Fetch addresses
+        List<AddressResponseDTO> addresses = addressRepository.findByUser(user)
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
+
+        log.info("Found {} addresses for userId={}", addresses.size(), userId);
+
+        return addresses;
     }
+
+
+
 
     private AddressResponseDTO mapToResponse(Address address) {
         return new AddressResponseDTO(
@@ -84,6 +105,7 @@ public class AddressService {
                 address.getUser().getId(),
                 address.getAddressLine1(),
                 address.getAddressLine2(),
+                address.getLandmark(),
                 address.getCity(),
                 address.getState(),
                 address.getPincode(),

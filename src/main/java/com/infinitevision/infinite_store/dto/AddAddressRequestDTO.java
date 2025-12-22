@@ -8,19 +8,29 @@ import lombok.Data;
 public class AddAddressRequestDTO {
 
     @NotBlank
-    private String addressLine1;
-
-    private String addressLine2;
-
+    private String addressLine1;   // ✅ MUST exist
     @NotBlank
+    private String landmark;       // ✅ new field
+    @NotBlank
+    private String addressLine2;
+    private Long userId;
+
+
+    @NotBlank(message = "City is required")
     private String city;
 
-    @NotBlank
+    @NotBlank(message = "State is required")
     private String state;
 
-    @Pattern(regexp = "\\d{6}", message = "Pincode must be 6 digits")
+
+
+    @Pattern(
+            regexp = "\\d{6}",
+            message = "Pincode must be exactly 6 digits"
+    )
     private String pincode;
 
-    @NotNull
+    @NotNull(message = "Address type is required")
     private AddressType addressType;
 }
+
