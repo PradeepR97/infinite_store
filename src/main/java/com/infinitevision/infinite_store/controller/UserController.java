@@ -4,6 +4,7 @@ import com.infinitevision.infinite_store.dto.ApiResponse;
 import com.infinitevision.infinite_store.dto.CreateUserRequestDTO;
 import com.infinitevision.infinite_store.service.UserService;
 import com.infinitevision.infinite_store.security.JwtService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -21,8 +22,10 @@ public class UserController {
 
     @PostMapping("/create")
     public ApiResponse<?> createUser(
+
             @RequestHeader("Authorization") String authorization,
-            @RequestBody CreateUserRequestDTO dto) {
+    @Valid @RequestBody CreateUserRequestDTO dto)
+    {
 
         log.info("POST /api/user/create called");
 
