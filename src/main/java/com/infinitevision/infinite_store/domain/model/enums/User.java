@@ -13,8 +13,13 @@ public class User extends BaseUser {
     @Column(name = "phone_number", unique = true, nullable = false)
     private String phoneNumber;
 
+    @Column(name = "name")
+    private String name;
 
+    @Column(name = "onboarding_completed")
+    private Boolean onboardingCompleted;
 }
+
 
 
 
