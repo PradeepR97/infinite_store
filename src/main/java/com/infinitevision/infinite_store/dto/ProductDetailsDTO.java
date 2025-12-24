@@ -1,11 +1,10 @@
 package com.infinitevision.infinite_store.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
-
+@Getter
+@Setter
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
