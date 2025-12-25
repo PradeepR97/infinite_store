@@ -18,7 +18,7 @@ public class CartController {
 
     private final CartService cartService;
 
-    // ➕ Add product to cart
+
     @PostMapping("/add/{productId}")
     public ResponseEntity<ApiResponse<String>> addToCart(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -47,7 +47,7 @@ public class CartController {
         }
     }
 
-    // 📦 Get cart items
+
     @GetMapping
     public ResponseEntity<ApiResponse<List<ProductCardDTO>>> getCart(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -75,4 +75,30 @@ public class CartController {
                     .body(ApiResponse.error("Failed to fetch cart", 500));
         }
     }
+    @DeleteMapping("/remove/{productId}")
+    public ResponseEntity<ApiResponse<String>> removeFromCart(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long productId) {
+
+        log.info("Remove from cart request for productId={}", productId);
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.failure("Token is required", 401));
+        }
+
+        String token = authHeader.replace("Bearer ", "");
+
+        try {
+            cartService.removeFromCart(token, productId);
+            return ResponseEntity.ok(
+                    ApiResponse.success("Product removed from cart", null)
+            );
+        } catch (Exception ex) {
+            log.error("Error removing product from cart", ex);
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.error("Failed to remove product from cart", 500));
+        }
+    }
+
 }

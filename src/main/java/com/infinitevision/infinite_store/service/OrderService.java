@@ -1,16 +1,14 @@
 package com.infinitevision.infinite_store.service;
 
 import com.infinitevision.infinite_store.domain.model.enums.*;
-import com.infinitevision.infinite_store.dto.AddAddressRequestDTO;
-import com.infinitevision.infinite_store.dto.OrderResponse;
-import com.infinitevision.infinite_store.dto.PlaceOrderRequest;
-import com.infinitevision.infinite_store.dto.ApiResponse;
+import com.infinitevision.infinite_store.dto.*;
 import com.infinitevision.infinite_store.repository.*;
+import com.infinitevision.infinite_store.security.JwtService;
 import com.infinitevision.infinite_store.util.OrderIdGenerator;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -22,41 +20,46 @@ public class OrderService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
+    private final JwtService jwtService;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final AddressRepository addressRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
 
-    public ApiResponse<OrderResponse> placeOrder(PlaceOrderRequest request) {
-        log.info("Placing order for userId={}", request.getUserId());
 
-        // -------- CREATE ADDRESS --------
-        var user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> {
-                    log.error("User not found with id={}", request.getUserId());
-                    return new RuntimeException("User not found");
-                });
+    public ApiResponse<OrderResponse> placeOrder(
+            String authorizationHeader,
+            PlaceOrderRequest request
+    ) {
 
-        AddAddressRequestDTO addrReq = request.getAddress();
+        // ---------- AUTH ----------
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Authorization token missing");
+        }
 
-        var address = new Address();
-        address.setUser(user);
-        address.setAddressLine1(addrReq.getAddressLine1());
-        address.setAddressLine2(addrReq.getAddressLine2());
-        address.setLandmark(addrReq.getLandmark());
-        address.setCity(addrReq.getCity());
-        address.setState(addrReq.getState());
-        address.setPincode(addrReq.getPincode());
-        address.setAddressType(addrReq.getAddressType());
+        String token = authorizationHeader.substring(7);
+        Long tokenUserId = jwtService.extractUserId(token);
 
-        Address savedAddress = addressRepository.save(address);
-        log.info("Address saved with id={}", savedAddress.getId());
+        if (!tokenUserId.equals(request.getUserId())) {
+            throw new RuntimeException("Unauthorized access");
+        }
 
-        // -------- CREATE ORDER --------
-        var order = new Order();
-        order.setUserId(request.getUserId());
-        order.setAddressId(savedAddress.getId());
+        User user = userRepository.findById(tokenUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // ---------- ADDRESS ----------
+        Address address = addressRepository.findById(request.getAddressId())
+                .orElseThrow(() -> new RuntimeException("Address not found"));
+
+        if (!address.getUser().getId().equals(tokenUserId)) {
+            throw new RuntimeException("Address does not belong to user");
+        }
+
+        // ---------- ORDER ----------
+        Order order = new Order();
+        order.setUserId(tokenUserId);
+        order.setAddressId(address.getId());
         order.setCreatedAt(LocalDateTime.now());
         order.setOrderStatus(OrderStatus.PACKING);
         order.setPayment(request.getPayment());
@@ -65,15 +68,12 @@ public class OrderService {
         Order savedOrder = orderRepository.save(order);
         savedOrder.setOrderId(OrderIdGenerator.generate(savedOrder.getId()));
         orderRepository.save(savedOrder);
-        log.info("Order saved with orderId={}", savedOrder.getOrderId());
 
-        // -------- CREATE ORDER ITEMS --------
+        // ---------- ORDER ITEMS ----------
         for (PlaceOrderRequest.Item reqItem : request.getItems()) {
+
             Product product = productRepository.findById(reqItem.getProductId())
-                    .orElseThrow(() -> {
-                        log.error("Product not found with id={}", reqItem.getProductId());
-                        return new RuntimeException("Product not found");
-                    });
+                    .orElseThrow(() -> new RuntimeException("Product not found"));
 
             OrderItem item = new OrderItem();
             item.setOrderId(savedOrder.getOrderId());
@@ -82,18 +82,14 @@ public class OrderService {
             item.setPrice(product.getPrice());
 
             orderItemRepository.save(item);
-            log.info("OrderItem saved: productId={}, quantity={}", product.getId(), reqItem.getQuantity());
         }
 
-        // -------- BUILD RESPONSE --------
-        OrderResponse orderResponse = buildResponse(savedOrder);
-        log.info("Order response built for orderId={}", savedOrder.getOrderId());
-
-        return ApiResponse.success("Order placed successfully", orderResponse);
+        // ---------- RESPONSE ----------
+        OrderResponse response = buildResponse(savedOrder);
+        return ApiResponse.success("Order placed successfully", response);
     }
 
     private OrderResponse buildResponse(Order order) {
-        OrderStatus status = calculateStatus(order.getCreatedAt());
 
         Address address = addressRepository.findById(order.getAddressId())
                 .orElseThrow(() -> new RuntimeException("Address not found"));
@@ -104,31 +100,45 @@ public class OrderService {
             Product product = productRepository.findById(i.getProductId())
                     .orElseThrow(() -> new RuntimeException("Product not found"));
 
-            var itemResp = new OrderResponse.Item();
-            itemResp.setProductId(product.getId());
-            itemResp.setProductName(product.getProductName());
-            itemResp.setQuantity(i.getQuantity());
-            itemResp.setPrice(i.getPrice());
-            itemResp.setTotalPrice(i.getPrice() * i.getQuantity());
-            return itemResp;
+            OrderResponse.Item item = new OrderResponse.Item();
+            item.setProductId(product.getId());
+            item.setProductName(product.getProductName());
+            item.setQuantity(i.getQuantity());
+            item.setPrice(i.getPrice());
+            item.setTotalPrice(i.getPrice() * i.getQuantity());
+            return item;
         }).toList();
 
+        // ---------- BILL ----------
         double itemTotal = responseItems.stream()
                 .mapToDouble(OrderResponse.Item::getTotalPrice)
                 .sum();
+        double deliveryFee = 40.0;
+        double discount = itemTotal * 0.10;
+        double grandTotal = itemTotal + deliveryFee - discount;
 
-        var bill = new OrderResponse.BillSummary();
+        // **STORE BILL SUMMARY TO ORDER ENTITY**
+        order.setItemTotal(itemTotal);
+        order.setDeliveryFee(deliveryFee);
+        order.setDiscount(discount);
+        order.setGrandTotal(grandTotal);
+        orderRepository.save(order); // save updated totals
+
+        // ---------- BILL SUMMARY FOR RESPONSE ----------
+        OrderResponse.BillSummary bill = new OrderResponse.BillSummary();
         bill.setItemTotal(itemTotal);
-        bill.setDeliveryFee(40.00);
-        bill.setDiscount(268.00);
-        bill.setGrandTotal(itemTotal + 40.00 - 268.00);
+        bill.setDeliveryFee(deliveryFee);
+        bill.setDiscount(discount);
+        bill.setGrandTotal(grandTotal);
 
-        var payment = new OrderResponse.Payment();
+        // ---------- PAYMENT ----------
+        OrderResponse.Payment payment = new OrderResponse.Payment();
         payment.setPaymentMethod(order.getPayment().name());
         payment.setPaymentStatus("PENDING");
         payment.setMessage("Pay cash when order is delivered");
 
-        var addr = new OrderResponse.Address();
+        // ---------- DELIVERY ADDRESS ----------
+        OrderResponse.Address addr = new OrderResponse.Address();
         addr.setAddressLine1(address.getAddressLine1());
         addr.setAddressLine2(address.getAddressLine2());
         addr.setLandmark(address.getLandmark());
@@ -137,14 +147,16 @@ public class OrderService {
         addr.setPincode(address.getPincode());
         addr.setAddressType(address.getAddressType().name());
 
-        var tracking = new OrderResponse.Tracking();
+        // ---------- TRACKING ----------
+        OrderResponse.Tracking tracking = new OrderResponse.Tracking();
         tracking.setEnabled(true);
 
-        var response = new OrderResponse();
+        // ---------- FINAL ----------
+        OrderResponse response = new OrderResponse();
         response.setOrderId(order.getOrderId());
-        response.setOrderStatus(status);
+        response.setOrderStatus(order.getOrderStatus());
         response.setArrivalTimeInSeconds(30);
-        response.setDeliveryStatusText(getStatusText(status));
+        response.setDeliveryStatusText(getStatusText(order.getOrderStatus()));
         response.setOnTime(true);
         response.setBillSummary(bill);
         response.setPayment(payment);
@@ -155,14 +167,8 @@ public class OrderService {
         return response;
     }
 
-    private OrderStatus calculateStatus(LocalDateTime createdAt) {
-        long seconds = Duration.between(createdAt, LocalDateTime.now()).getSeconds();
-        if (seconds < 30) return OrderStatus.PACKING;
-        if (seconds < 60) return OrderStatus.DELIVERY_PARTNER_PICKED;
-        if (seconds < 120) return OrderStatus.ON_THE_WAY;
-        return OrderStatus.DELIVERED;
-    }
 
+    // ================= STATUS =================
     private String getStatusText(OrderStatus status) {
         return switch (status) {
             case PACKING -> "Your order is getting packed";

@@ -13,8 +13,8 @@ import com.infinitevision.infinite_store.security.JwtService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -100,4 +100,24 @@ public class CartService {
                 })
                 .toList();
     }
+    public void removeFromCart(String token, Long productId) {
+
+        Long userId = JwtService.extractUserId(token);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Cart cart = cartRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Cart not found"));
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        CartItem cartItem = cartItemRepository
+                .findByCartAndProduct(cart, product)
+                .orElseThrow(() -> new RuntimeException("Product not in cart"));
+
+        cartItemRepository.delete(cartItem);
+    }
+
 }

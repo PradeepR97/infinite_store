@@ -6,33 +6,38 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-
 import lombok.*;
-
-
-
+@Setter
+@Getter
 @Entity
 @Table(name = "orders")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Data
 public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 10 digit order id like 091025XXXX
-    @Column(unique = true)
+    @Column(name = "order_id", unique = true)
     private String orderId;
 
+    @Column(name = "user_id")
     private Long userId;
 
+    @Column(name = "address_id")
     private Long addressId;
 
-    private LocalDateTime createdAt;
+    @Column(name = "item_total")
+    private Double itemTotal;
+
+    @Column(name = "delivery_fee")
+    private Double deliveryFee;
+
+    @Column(name = "discount")
+    private Double discount;
+
+    @Column(name = "grand_total")
+    private Double grandTotal;
 
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
@@ -40,11 +45,9 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private Payment payment;
 
+    @Column(name = "on_time")
     private Boolean onTime;
 
-    /* ---------- BILL SUMMARY ---------- */
-    private Double itemTotal;
-    private Double deliveryFee;
-    private Double discount;
-    private Double grandTotal;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 }

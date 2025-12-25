@@ -13,26 +13,31 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
-public class OrderController {
 
-    private static final Logger log = LoggerFactory.getLogger(OrderController.class);
+    public class OrderController {
 
-    private final OrderService orderService;
+        private static final Logger log = LoggerFactory.getLogger(OrderController.class);
 
-    @PostMapping("/place")
-    public ResponseEntity<ApiResponse<?>> placeOrder(@RequestBody PlaceOrderRequest request) {
-        log.info("Received order placement request for userId={}", request.getUserId());
+        private final OrderService orderService;
 
-        try {
-            var orderResponse = orderService.placeOrder(request);
-            log.info("Order placed successfully for userId={}, orderId={}", request.getUserId(), orderResponse.getData().getOrderId());
+        @PostMapping("/place")
+        public ResponseEntity<ApiResponse<?>> placeOrder(
+                @RequestHeader("Authorization") String authorizationHeader,
+                @RequestBody PlaceOrderRequest request
+        ) {
+            log.info("Received order placement request");
 
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success("Order placed successfully", orderResponse.getData()));
-        } catch (Exception e) {
-            log.error("Failed to place order for userId={}: {}", request.getUserId(), e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Failed to place order: " + e.getMessage(), 500));
+            try {
+                var orderResponse = orderService.placeOrder(authorizationHeader, request);
+
+                log.info("Order placed successfully, orderId={}", orderResponse.getData().getOrderId());
+
+                return ResponseEntity.status(HttpStatus.CREATED)
+                        .body(ApiResponse.success("Order placed successfully", orderResponse.getData()));
+            } catch (Exception e) {
+                log.error("Failed to place order: {}", e.getMessage(), e);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.error(e.getMessage(), 401));
+            }
         }
     }
-}
